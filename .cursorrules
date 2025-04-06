@@ -1,0 +1,51 @@
+# Codebase Overview
+
+This codebase appears to be part of a web application built using React, TypeScript, and shadcn/UI components. It is structured to support a landing page, authentication flows, and a dashboard for logged-in users. The application leverages React Router 7.5 for client-side routing and integrates with Supabase for backend services, including authentication and database interactions.
+
+# Stack and Key Technologies
+
+- **Framework**: React with React Router 7.5
+- **TypeScript**: Used for type-safe code across the frontend
+- **Tailwind CSS**: Utility-first CSS framework for styling
+- **shadcn/UI**: Component library built on Tailwind CSS for UI elements like buttons, modals, inputs, etc.
+- **Supabase**: Open-source Firebase alternative used for backend services including authentication, database, and storage
+- **Supabase Auth**: Used for authentication, specifically with Kakao OAuth integration
+
+# Purpose and Functionality
+
+## Routing & Navigation
+
+- **React Router 7.5**: Uses the latest features of React Router including:
+  - Data loaders and actions for data fetching
+  - Deferred data loading
+  - Lazy loading components
+  - Layout routes with `<Outlet>`
+  - Client-side navigation with `<Link>` and `useNavigate()`
+  - Route protection with loaders
+
+## Authentication
+
+The application includes a comprehensive authentication flow:
+
+- **Login**: Users can log in using Kakao Auth integrated with Supabase OAuth
+- **Signup**: New users can sign up with Kakao Auth
+- **Logout**: Users can log out
+- **Auth State Management**: Uses Supabase auth state listeners with React context
+
+## User Interface
+
+- **Landing Page**: Contains components like SubmitButton, LoginPage, and LogoutModal
+- **Dashboard**: For logged-in users, showing personalized content and a sidebar for navigation
+- **Error Handling**: Uses React Router's error boundaries and error elements
+
+## Data Management
+
+- **Supabase Client**: For database interactions and managing authenticated sessions
+- **Loaders/Actions**: React Router's data fetching patterns for server communication
+- **Type-safe API**: TypeScript interfaces ensure type safety across API boundaries
+
+## Layout Components
+
+- **Navbar**: A responsive navbar for the landing page and public pages
+- **Sidebar**: A collapsible sidebar for the dashboard, for navigation within protected routes
+- **Layouts**: Reusable layout components using React Router's nested routes and outlets
