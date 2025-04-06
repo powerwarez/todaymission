@@ -85,3 +85,34 @@ This template comes with [Tailwind CSS](https://tailwindcss.com/) already config
 ---
 
 Built with ❤️ using React Router.
+
+# Today Mission
+
+이 프로젝트는 React Router 7.5를 사용한 SSR 지원 웹 애플리케이션입니다.
+
+## Netlify 배포 방법
+
+이 프로젝트는 Netlify에 SPA 방식으로 배포할 수 있습니다:
+
+1. Netlify 사이트에 프로젝트를 연결합니다.
+2. 빌드 설정:
+   - 빌드 명령어: `npm run build`
+   - 배포 디렉토리: `build/client`
+3. 환경 변수 설정 (필요한 경우)
+
+### 주의사항
+
+이 프로젝트는 원래 SSR을 지원하도록 설계되었지만, Netlify에서는 SPA 방식으로 배포됩니다. 따라서 SSR 기능은 사용할 수 없습니다. SSR을 지원하려면 Vercel이나 Railway 같은 다른 호스팅 서비스를 고려해보세요.
+
+## 로컬 개발
+
+```bash
+# 개발 서버 실행
+npm run dev
+
+# 프로덕션 빌드
+npm run build
+
+# 프로덕션 빌드 서버 실행
+npm start
+```
