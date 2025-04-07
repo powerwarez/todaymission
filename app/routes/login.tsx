@@ -1,7 +1,7 @@
 import { redirect } from "react-router";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../lib/server";
 import { getSession } from "../lib/auth";
 import { useEffect, useState } from "react";
 
