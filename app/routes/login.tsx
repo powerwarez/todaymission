@@ -22,7 +22,8 @@ export default function Login() {
   useEffect(() => {
     setIsClient(true);
     if (typeof window !== "undefined") {
-      setRedirectUrl(`${window.location.origin}/dashboard`);
+      // 콜백 라우트로 리디렉션 설정
+      setRedirectUrl(`${window.location.origin}/auth-callback`);
     }
     setIsLoading(false);
   }, []);
@@ -35,6 +36,7 @@ export default function Login() {
       provider: "kakao",
       options: {
         redirectTo: redirectUrl,
+        skipBrowserRedirect: false, // 브라우저 리디렉션 확실히 적용
       },
     });
   };

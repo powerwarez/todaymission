@@ -18,10 +18,14 @@ import Challenges, {
   loader as challengesLoader,
   action as challengesAction,
 } from "./routes/_dashboard.challenges";
+import AuthCallback from "./routes/auth-callback";
 
 // 로그인 페이지
 export { default as Login } from "./routes/login";
 export { loader as loginLoader } from "./routes/login";
+
+// 인증 콜백 페이지
+export { default as AuthCallback } from "./routes/auth-callback";
 
 // 루트 경로 리디렉션
 async function rootLoader() {
@@ -50,6 +54,9 @@ export { action as challengesAction } from "./routes/_dashboard.challenges";
 export default [
   // 로그인 페이지
   route("login", "./routes/login.tsx"),
+
+  // 인증 콜백 처리 라우트
+  route("auth-callback", "./routes/auth-callback.tsx"),
 
   // 기본 경로에서 대시보드로 리디렉트
   route("/", "./routes/index.ts"),
