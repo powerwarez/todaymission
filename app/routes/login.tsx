@@ -1,7 +1,7 @@
 import { redirect } from "react-router";
 import { supabase } from "../lib/server";
 import { getSession } from "../lib/auth";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export async function loader() {
   const session = await getSession();
@@ -10,26 +10,66 @@ export async function loader() {
     return redirect("/dashboard");
   }
 
-  return {};
+  // URL에서 오류 파라미터 확인 (OAuth 리디렉션 오류일 경우)
+  const url = new URL(
+    typeof window !== "undefined" ? window.location.href : "http://localhost"
+  );
+  const errorDescription = url.hash
+    ? new URLSearchParams(url.hash.substring(1)).get("error_description")
+    : null;
+
+  return {
+    error: errorDescription ? decodeURIComponent(errorDescription) : null,
+  };
 }
 
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // URL에서 오류 확인
+  useEffect(() => {
+    // 해시에서 오류 확인
+    if (window.location.hash && window.location.hash.includes("error")) {
+      try {
+        const hashParams = new URLSearchParams(
+          window.location.hash.substring(1)
+        );
+        const errorMsg = hashParams.get("error_description");
+        if (errorMsg) {
+          setError(decodeURIComponent(errorMsg));
+          // 오류 파라미터 제거를 위한 URL 수정
+          window.history.replaceState(null, "", "/login");
+        }
+      } catch (err) {
+        console.error("오류 파라미터 파싱 실패:", err);
+      }
+    }
+  }, []);
+
   const handleKakaoLogin = async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      // 대시보드로 직접 리디렉션
-      const redirectUrl = `${window.location.origin}/dashboard`;
+      // 현재 호스트 가져오기
+      const host = window.location.origin;
+
+      // auth/callback 리디렉션 URL 설정
+      const redirectUrl = `${host}/auth/callback`;
+
+      console.log("Kakao 로그인 시작, 리디렉션 URL:", redirectUrl);
 
       // Supabase OAuth 로그인 실행
-      const { error: signInError } = await supabase.auth.signInWithOAuth({
+      const { data, error: signInError } = await supabase.auth.signInWithOAuth({
         provider: "kakao",
         options: {
           redirectTo: redirectUrl,
+          scopes: "profile_nickname,profile_image,account_email", // 필요한 스코프 추가
+          queryParams: {
+            // 카카오 로그인 추가 파라미터 설정
+            prompt: "login", // 매번 로그인 화면 표시
+          },
         },
       });
 
@@ -37,8 +77,10 @@ export default function Login() {
         console.error("로그인 오류:", signInError.message);
         setError(`로그인을 시작할 수 없습니다: ${signInError.message}`);
         setIsLoading(false);
+        return;
       }
 
+      console.log("로그인 프로세스 시작됨, 리디렉션 대기 중...");
       // 성공적으로 호출되면 카카오 로그인 페이지로 리디렉션됨
       // 이 아래 코드는 실행되지 않음
     } catch (err) {
@@ -62,7 +104,8 @@ export default function Login() {
 
         {error && (
           <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm mb-4">
-            {error}
+            <p className="font-medium mb-1">로그인 중 오류가 발생했습니다</p>
+            <p>{error}</p>
           </div>
         )}
 
@@ -87,6 +130,12 @@ export default function Login() {
           )}
           <span>카카오계정으로 로그인</span>
         </button>
+
+        <div className="mt-4 text-center text-sm text-gray-500">
+          <p>
+            로그인하면 서비스 이용약관과 개인정보처리방침에 동의하게 됩니다.
+          </p>
+        </div>
       </div>
     </div>
   );
