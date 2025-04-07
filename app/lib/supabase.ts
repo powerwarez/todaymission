@@ -1,8 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 
 // 환경 변수에서 Supabase URL과 Anon Key 가져오기 (Vite의 환경 변수 접근 방식)
-const supabaseUrl: string = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey: string = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl: string = process.env.SUPABASE_URL as string;
+const supabaseAnonKey: string = process.env.VITE_SUPABASE_ANON_KEY as string;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
