@@ -55,7 +55,7 @@ export default function AuthCallback() {
 
             // 3초 후 로그인 페이지로 리디렉션
             setTimeout(() => {
-              window.location.href = "/login";
+              window.location.replace("/login");
             }, 3000);
             return;
           }
@@ -99,7 +99,7 @@ export default function AuthCallback() {
 
             // 3초 후 로그인 페이지로 리디렉션
             setTimeout(() => {
-              window.location.href = "/login";
+              window.location.replace("/login");
             }, 3000);
             return;
           }
@@ -109,11 +109,21 @@ export default function AuthCallback() {
             setStatus("인증 성공, 리디렉션 중...");
             setRedirecting(true);
 
-            // 세션 설정 성공 후 대시보드로 이동
-            setTimeout(() => {
-              // URL에 직접 이동하는 대신 history.pushState 사용
-              window.location.href = "/dashboard";
-            }, 1000);
+            // 세션 데이터 캐싱
+            localStorage.setItem(
+              "supabase.auth.token",
+              JSON.stringify({
+                currentSession: data.session,
+                expiresAt:
+                  Math.floor(Date.now() / 1000) + data.session.expires_in,
+              })
+            );
+
+            // 세션 설정 성공 후 대시보드로 강제 이동
+            console.log("대시보드로 강제 이동 시도");
+
+            // 즉시 실행
+            window.location.replace("/dashboard");
             return;
           }
         }
@@ -123,13 +133,57 @@ export default function AuthCallback() {
           console.log("코드 교환 흐름 감지됨");
           setStatus("코드 교환 중...");
 
-          // 이 부분은 필요에 따라 추가 구현
-          // PKCE 흐름은 임시적으로 지원하지 않음
-          setDebugInfo((prev) => ({ ...prev, flowDetected: "code (PKCE)" }));
+          try {
+            // 코드 교환 시도
+            console.log("코드를 토큰으로 교환 시도");
 
-          // 로그인 페이지로 리디렉션
+            // PKCE 방식으로 코드 교환
+            const { data: exchangeData, error: exchangeError } =
+              await supabase.auth.exchangeCodeForSession(code);
+
+            if (exchangeError) {
+              console.error("코드 교환 오류:", exchangeError);
+              setError(`코드 교환 실패: ${exchangeError.message}`);
+              setStatus("인증 실패");
+
+              setTimeout(() => {
+                window.location.replace("/login");
+              }, 3000);
+              return;
+            }
+
+            if (exchangeData.session) {
+              console.log("코드 교환 성공, 대시보드로 리디렉션");
+              setStatus("인증 성공, 리디렉션 중...");
+              setRedirecting(true);
+
+              // 세션 데이터 캐싱
+              localStorage.setItem(
+                "supabase.auth.token",
+                JSON.stringify({
+                  currentSession: exchangeData.session,
+                  expiresAt:
+                    Math.floor(Date.now() / 1000) +
+                    exchangeData.session.expires_in,
+                })
+              );
+
+              // 대시보드로 강제 이동
+              window.location.replace("/dashboard");
+              return;
+            }
+          } catch (err) {
+            console.error("코드 교환 중 오류:", err);
+            setError(
+              `코드 교환 중 오류: ${
+                err instanceof Error ? err.message : String(err)
+              }`
+            );
+          }
+
+          // 코드 교환 실패 시 로그인 페이지로 리디렉션
           setTimeout(() => {
-            window.location.href = "/login";
+            window.location.replace("/login");
           }, 3000);
           return;
         }
@@ -139,7 +193,7 @@ export default function AuthCallback() {
         setStatus("인증 정보 없음");
 
         setTimeout(() => {
-          window.location.href = "/login";
+          window.location.replace("/login");
         }, 3000);
       } catch (err) {
         console.error("인증 콜백 처리 중 오류:", err);
@@ -153,7 +207,7 @@ export default function AuthCallback() {
 
         // 오류 발생 시 로그인 페이지로 리디렉션
         setTimeout(() => {
-          window.location.href = "/login";
+          window.location.replace("/login");
         }, 3000);
       }
     }
