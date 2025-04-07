@@ -43,9 +43,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-primary-100 to-primary-200 p-4">
       <div className="bg-white rounded-3xl p-8 shadow-soft max-w-md w-full">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-primary-700 mb-2">
-            오늘의 미션
-          </h1>
+          <h1 className="text-3xl font-bold text-black mb-2">오늘의 미션</h1>
           <p className="text-gray-600">매일매일 습관을 만들어가요!</p>
         </div>
 
