@@ -12,6 +12,8 @@ export default function AuthCallback() {
   const [status, setStatus] = useState("처리 중...");
   const [error, setError] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<Record<string, any>>({});
+  // 세션이 성공적으로 설정되어 리디렉션이 진행 중인지 추적
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
     async function handleAuthCallback() {
@@ -76,20 +78,6 @@ export default function AuthCallback() {
           hasCode: !!code,
         });
 
-        // 현재 세션 확인 (이미 로그인되어 있는지)
-        const { data: sessionData } = await supabase.auth.getSession();
-
-        if (sessionData && sessionData.session) {
-          console.log("이미 세션이 있음, 대시보드로 리디렉션합니다");
-          setStatus("이미 로그인됨, 리디렉션 중...");
-
-          // 3초 후 대시보드로 이동
-          setTimeout(() => {
-            window.location.href = "/dashboard";
-          }, 2000);
-          return;
-        }
-
         // 액세스 토큰이 있으면 세션 설정
         if (accessToken) {
           console.log("액세스 토큰으로 세션 설정 시도");
@@ -119,9 +107,11 @@ export default function AuthCallback() {
           if (data.session) {
             console.log("세션 설정 성공, 대시보드로 리디렉션");
             setStatus("인증 성공, 리디렉션 중...");
+            setRedirecting(true);
 
             // 세션 설정 성공 후 대시보드로 이동
             setTimeout(() => {
+              // URL에 직접 이동하는 대신 history.pushState 사용
               window.location.href = "/dashboard";
             }, 1000);
             return;
@@ -168,8 +158,10 @@ export default function AuthCallback() {
       }
     }
 
-    handleAuthCallback();
-  }, []);
+    if (!redirecting) {
+      handleAuthCallback();
+    }
+  }, [redirecting]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-primary-100 to-primary-200 p-4">

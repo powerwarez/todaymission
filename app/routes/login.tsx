@@ -48,21 +48,8 @@ export default function Login() {
   }, []);
 
   // 로그인 시도 전에 세션 확인
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (data.session) {
-          console.log("이미 세션이 있어 대시보드로 이동합니다.");
-          window.location.href = "/dashboard";
-        }
-      } catch (err) {
-        console.error("세션 확인 중 오류:", err);
-      }
-    };
-
-    checkSession();
-  }, []);
+  // NOTE: 서버 측 loader에서 이미 세션을 체크하고 있으므로, 클라이언트 측 세션 체크는 제거합니다.
+  // 무한 리디렉션 루프 방지
 
   const handleKakaoLogin = async () => {
     try {
