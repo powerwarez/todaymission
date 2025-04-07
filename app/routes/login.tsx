@@ -1,6 +1,7 @@
 import { redirect } from "react-router";
 import { supabase } from "../lib/server";
 import { getSession } from "../lib/auth";
+import { getBrowserClient } from "../lib/browser-client";
 import { useEffect, useState } from "react";
 
 export async function loader() {
@@ -17,6 +18,7 @@ export default function Login() {
   const [redirectUrl, setRedirectUrl] = useState("");
   const [isClient, setIsClient] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // 클라이언트 사이드에서만 window 객체 접근
   useEffect(() => {
@@ -29,16 +31,51 @@ export default function Login() {
   }, []);
 
   const handlekakaoLogin = async () => {
-    if (!redirectUrl) return;
+    if (!redirectUrl) {
+      setError(
+        "리디렉션 URL이 설정되지 않았습니다. 페이지를 새로고침해 주세요."
+      );
+      return;
+    }
 
-    setIsLoading(true);
-    await supabase.auth.signInWithOAuth({
-      provider: "kakao",
-      options: {
-        redirectTo: redirectUrl,
-        skipBrowserRedirect: false, // 브라우저 리디렉션 확실히 적용
-      },
-    });
+    try {
+      setIsLoading(true);
+      console.log("카카오 로그인 시도, 리디렉션 URL:", redirectUrl);
+
+      // 브라우저 환경에서 Supabase 클라이언트 가져오기
+      const browserClient = getBrowserClient();
+
+      const { data, error: signInError } =
+        await browserClient.auth.signInWithOAuth({
+          provider: "kakao",
+          options: {
+            redirectTo: redirectUrl,
+            skipBrowserRedirect: false, // 브라우저 리디렉션 확실히 적용
+            queryParams: {
+              // 카카오 로그인에 필요한 추가 파라미터 설정
+              prompt: "login", // 매번 로그인 화면 표시 (선택적)
+            },
+          },
+        });
+
+      if (signInError) {
+        console.error("로그인 시작 오류:", signInError.message);
+        setError(`로그인을 시작할 수 없습니다: ${signInError.message}`);
+        setIsLoading(false);
+        return;
+      }
+
+      // signInWithOAuth는 리디렉션만 수행하므로 여기까지 코드가 실행되지 않을 수 있음
+      console.log("카카오 인증 페이지로 리디렉션 중...");
+    } catch (err) {
+      console.error("로그인 처리 중 예외 발생:", err);
+      setError(
+        `로그인 처리 중 오류가 발생했습니다: ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      );
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -56,6 +93,11 @@ export default function Login() {
         ) : (
           isClient && (
             <div className="flex flex-col space-y-4">
+              {error && (
+                <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm mb-4">
+                  {error}
+                </div>
+              )}
               <button
                 onClick={handlekakaoLogin}
                 className="w-full bg-[#FEE500] border border-gray-300 text-[#3A1D1D] py-3 px-4 rounded-full font-semibold flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
