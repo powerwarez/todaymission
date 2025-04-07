@@ -26,8 +26,29 @@ export default function Login() {
     if (typeof window !== "undefined") {
       // 콜백 라우트로 리디렉션 설정
       setRedirectUrl(`${window.location.origin}/auth-callback`);
+
+      // 이미 세션이 있는지 확인
+      const checkSession = async () => {
+        try {
+          const browserClient = getBrowserClient();
+          const { data } = await browserClient.auth.getSession();
+          if (data.session) {
+            console.log(
+              "이미 로그인된 세션이 있습니다. 대시보드로 이동합니다."
+            );
+            window.location.href = "/dashboard";
+            return;
+          }
+        } catch (err) {
+          console.error("세션 확인 중 오류:", err);
+        }
+        setIsLoading(false);
+      };
+
+      checkSession();
+    } else {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
   const handlekakaoLogin = async () => {
@@ -51,6 +72,7 @@ export default function Login() {
           options: {
             redirectTo: redirectUrl,
             skipBrowserRedirect: false, // 브라우저 리디렉션 확실히 적용
+            scopes: "profile_nickname,profile_image,account_email", // 카카오 스코프 명시적 설정
             queryParams: {
               // 카카오 로그인에 필요한 추가 파라미터 설정
               prompt: "login", // 매번 로그인 화면 표시 (선택적)

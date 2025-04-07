@@ -51,26 +51,55 @@ export async function signOut() {
   return redirect("/login");
 }
 
-// OAuth 해시 파라미터에서 세션 설정 (클라이언트용)
-export async function setSessionFromHash(hash: string) {
-  if (!hash || !hash.includes("access_token")) {
-    return { success: false, error: "유효한 인증 토큰이 없습니다." };
+// OAuth 토큰을 URL에서 추출하고 세션 설정 (클라이언트용)
+export async function setSessionFromHash(urlFragment: string) {
+  if (!urlFragment) {
+    return { success: false, error: "URL 파라미터가 없습니다." };
   }
 
   try {
-    const params = new URLSearchParams(hash.substring(1));
-    const accessToken = params.get("access_token");
-    const refreshToken = params.get("refresh_token") || "";
-    const provider = params.get("provider") || "kakao";
+    // URL 파라미터에서 토큰 추출
+    let accessToken: string | null = null;
+    let refreshToken: string | null = null;
+    let provider = "kakao";
+
+    console.log(
+      "토큰 추출 시도 중, URL 파라미터:",
+      urlFragment.substring(0, 20) + "..."
+    );
+
+    // Case 1: 해시로 시작하는 경우 (#access_token=...)
+    if (urlFragment.startsWith("#")) {
+      const hashParams = new URLSearchParams(urlFragment.substring(1));
+      accessToken = hashParams.get("access_token");
+      refreshToken = hashParams.get("refresh_token");
+      provider = hashParams.get("provider") || "kakao";
+    }
+    // Case 2: 쿼리 파라미터로 시작하는 경우 (?access_token=...)
+    else if (urlFragment.startsWith("?")) {
+      const queryParams = new URLSearchParams(urlFragment);
+      accessToken = queryParams.get("access_token");
+      refreshToken = queryParams.get("refresh_token");
+      provider = queryParams.get("provider") || "kakao";
+    }
+    // Case 3: 경로에 토큰이 있는 경우 (/access_token=...)
+    else if (urlFragment.includes("access_token")) {
+      const pathParams = new URLSearchParams(urlFragment);
+      accessToken = pathParams.get("access_token");
+      refreshToken = pathParams.get("refresh_token");
+      provider = pathParams.get("provider") || "kakao";
+    }
 
     if (!accessToken) {
-      return { success: false, error: "액세스 토큰이 없습니다." };
+      return { success: false, error: "토큰을 추출할 수 없습니다." };
     }
+
+    console.log("토큰 추출 성공, 세션 설정 시도 중");
 
     // Supabase 세션 설정
     const { data, error } = await supabase.auth.setSession({
       access_token: accessToken,
-      refresh_token: refreshToken,
+      refresh_token: refreshToken || "",
     });
 
     if (error) {
