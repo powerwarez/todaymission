@@ -32,7 +32,6 @@ export default function Login() {
       provider: "kakao",
       options: {
         redirectTo: redirectUrl,
-        },
       },
     });
   };
