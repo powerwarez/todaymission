@@ -47,6 +47,23 @@ export default function Login() {
     }
   }, []);
 
+  // 로그인 시도 전에 세션 확인
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          console.log("이미 세션이 있어 대시보드로 이동합니다.");
+          window.location.href = "/dashboard";
+        }
+      } catch (err) {
+        console.error("세션 확인 중 오류:", err);
+      }
+    };
+
+    checkSession();
+  }, []);
+
   const handleKakaoLogin = async () => {
     try {
       setIsLoading(true);
@@ -60,8 +77,11 @@ export default function Login() {
 
       console.log("Kakao 로그인 시작, 리디렉션 URL:", redirectUrl);
 
+      // Supabase Auth 설정 확인
+      await supabase.auth.refreshSession();
+
       // Supabase OAuth 로그인 실행
-      const { data, error: signInError } = await supabase.auth.signInWithOAuth({
+      const { error: signInError } = await supabase.auth.signInWithOAuth({
         provider: "kakao",
         options: {
           redirectTo: redirectUrl,
@@ -81,8 +101,7 @@ export default function Login() {
       }
 
       console.log("로그인 프로세스 시작됨, 리디렉션 대기 중...");
-      // 성공적으로 호출되면 카카오 로그인 페이지로 리디렉션됨
-      // 이 아래 코드는 실행되지 않음
+      // 여기 이후로는 코드가 실행되지 않음 (카카오 로그인 페이지로 리디렉션)
     } catch (err) {
       console.error("로그인 처리 중 예외 발생:", err);
       setError(
