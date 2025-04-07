@@ -109,21 +109,42 @@ export default function AuthCallback() {
             setStatus("인증 성공, 리디렉션 중...");
             setRedirecting(true);
 
+            // 세션 상태 확인 및 디버깅
+            const sessionCheck = await supabase.auth.getSession();
+            console.log("최종 세션 상태:", {
+              hasSession: !!sessionCheck.data.session,
+              user: sessionCheck.data.session?.user?.email || "없음",
+            });
+
             // 세션 데이터 캐싱
-            localStorage.setItem(
-              "supabase.auth.token",
-              JSON.stringify({
-                currentSession: data.session,
-                expiresAt:
-                  Math.floor(Date.now() / 1000) + data.session.expires_in,
-              })
-            );
+            try {
+              localStorage.setItem(
+                "supabase.auth.token",
+                JSON.stringify({
+                  currentSession: data.session,
+                  expiresAt:
+                    Math.floor(Date.now() / 1000) + data.session.expires_in,
+                })
+              );
+              console.log("세션 데이터 로컬 스토리지 저장 성공");
+            } catch (storageErr) {
+              console.error("로컬 스토리지 저장 실패:", storageErr);
+            }
 
             // 세션 설정 성공 후 대시보드로 강제 이동
             console.log("대시보드로 강제 이동 시도");
 
-            // 즉시 실행
-            window.location.replace("/dashboard");
+            try {
+              // 약간의 지연 후 이동 (세션이 완전히 설정될 시간을 줌)
+              setTimeout(() => {
+                console.log("대시보드로 이동 실행");
+                window.location.href = "/dashboard";
+              }, 500);
+            } catch (navErr) {
+              console.error("네비게이션 오류:", navErr);
+              // 대체 방법으로 페이지 이동 시도
+              window.location.assign("/dashboard");
+            }
             return;
           }
         }
@@ -157,19 +178,41 @@ export default function AuthCallback() {
               setStatus("인증 성공, 리디렉션 중...");
               setRedirecting(true);
 
+              // 세션 상태 확인 및 디버깅
+              const sessionCheck = await supabase.auth.getSession();
+              console.log("최종 세션 상태:", {
+                hasSession: !!sessionCheck.data.session,
+                user: sessionCheck.data.session?.user?.email || "없음",
+              });
+
               // 세션 데이터 캐싱
-              localStorage.setItem(
-                "supabase.auth.token",
-                JSON.stringify({
-                  currentSession: exchangeData.session,
-                  expiresAt:
-                    Math.floor(Date.now() / 1000) +
-                    exchangeData.session.expires_in,
-                })
-              );
+              try {
+                localStorage.setItem(
+                  "supabase.auth.token",
+                  JSON.stringify({
+                    currentSession: exchangeData.session,
+                    expiresAt:
+                      Math.floor(Date.now() / 1000) +
+                      exchangeData.session.expires_in,
+                  })
+                );
+                console.log("세션 데이터 로컬 스토리지 저장 성공");
+              } catch (storageErr) {
+                console.error("로컬 스토리지 저장 실패:", storageErr);
+              }
 
               // 대시보드로 강제 이동
-              window.location.replace("/dashboard");
+              try {
+                // 약간의 지연 후 이동 (세션이 완전히 설정될 시간을 줌)
+                setTimeout(() => {
+                  console.log("대시보드로 이동 실행");
+                  window.location.href = "/dashboard";
+                }, 500);
+              } catch (navErr) {
+                console.error("네비게이션 오류:", navErr);
+                // 대체 방법으로 페이지 이동 시도
+                window.location.assign("/dashboard");
+              }
               return;
             }
           } catch (err) {
