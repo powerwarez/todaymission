@@ -1,20 +1,36 @@
 import { createClient } from "@supabase/supabase-js";
 
-// 환경 변수에서 Supabase URL과 Anon Key 가져오기 (Vite의 환경 변수 접근 방식)
-const supabaseUrl: string = process.env.SUPABASE_URL as string;
-const supabaseAnonKey: string = process.env.VITE_SUPABASE_ANON_KEY as string;
+const createSupabaseClient = () => {
+  // Vite의 환경 변수 접근
+  let supabaseUrl: string | undefined;
+  let supabaseAnonKey: string | undefined;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    "필수 환경 변수가 누락되었습니다. VITE_SUPABASE_URL과 VITE_SUPABASE_ANON_KEY를 반드시 설정해주세요."
-  );
-}
+  try {
+    // 브라우저와 서버 모두에서 환경 변수 접근 시도
+    supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  } catch (error) {
+    console.error("환경 변수 접근 중 오류 발생:", error);
+    throw new Error("환경 변수에 접근할 수 없습니다.");
+  }
 
-console.log("Supabase URL 존재 여부:", !!supabaseUrl);
-console.log("Supabase Anon Key 존재 여부:", !!supabaseAnonKey);
+  // 환경 변수 유효성 검사
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error(
+      "Supabase 환경 변수가 설정되지 않았습니다. (.env 파일을 확인해주세요)"
+    );
+    console.error(
+      "다음 환경 변수가 필요합니다: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY"
+    );
+    throw new Error("Supabase 환경 변수가 설정되지 않았습니다.");
+  }
 
-// Supabase 클라이언트 생성
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  // 유효한 환경 변수가 있으면 실제 클라이언트 생성
+  return createClient(supabaseUrl, supabaseAnonKey);
+};
+
+// 클라이언트 생성
+export const supabase = createSupabaseClient();
 
 export type Mission = {
   id: number;
