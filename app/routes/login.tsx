@@ -32,6 +32,10 @@ export default function Login() {
       provider: "kakao",
       options: {
         redirectTo: redirectUrl,
+        queryParams: {
+          // 이메일을 제외한 기본 정보만 요청
+          scope: "profile_nickname profile_image",
+        },
       },
     });
   };
