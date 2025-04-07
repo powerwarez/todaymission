@@ -2,13 +2,19 @@ import { supabase } from "./server";
 import { redirect } from "react-router";
 
 export async function getSession() {
-  const { data, error } = await supabase.auth.getSession();
+  try {
+    const { data, error } = await supabase.auth.getSession();
 
-  if (error) {
-    throw new Error(error.message);
+    if (error) {
+      console.error("세션 확인 중 오류:", error.message);
+      return null;
+    }
+
+    return data.session;
+  } catch (err) {
+    console.error("세션 확인 중 예외 발생:", err);
+    return null;
   }
-
-  return data.session;
 }
 
 export async function getUserId() {
