@@ -86,33 +86,63 @@ This template comes with [Tailwind CSS](https://tailwindcss.com/) already config
 
 Built with ❤️ using React Router.
 
-# Today Mission
+# 오늘의 미션
 
-이 프로젝트는 React Router 7.5를 사용한 SSR 지원 웹 애플리케이션입니다.
+5~10세 아동의 습관 형성을 위한 미션 관리 애플리케이션입니다.
 
-## Netlify 배포 방법
+## 주요 기능
 
-이 프로젝트는 Netlify에 SPA 방식으로 배포할 수 있습니다:
+- **로그인**: Supabase Auth와 Kakao OAuth를 통한 인증
+- **오늘의 미션**: 평일(월~금)별 미션 목록 확인 및 완료 체크
+- **명예의 전당**: 획득한 배지와 주간 미션 달성 기록 확인
+- **도전과제 설정**: 미션 설정 및 도전과제 확인
 
-1. Netlify 사이트에 프로젝트를 연결합니다.
-2. 빌드 설정:
-   - 빌드 명령어: `npm run build`
-   - 배포 디렉토리: `build/client`
-3. 환경 변수 설정 (필요한 경우)
+## 기술 스택
 
-### 주의사항
+- **프론트엔드**: React, TypeScript, Tailwind CSS
+- **라우팅**: React Router 7.5
+- **백엔드**: Supabase (인증, 데이터베이스, 스토리지)
+- **UI 컴포넌트**: 커스텀 UI 컴포넌트
 
-이 프로젝트는 원래 SSR을 지원하도록 설계되었지만, Netlify에서는 SPA 방식으로 배포됩니다. 따라서 SSR 기능은 사용할 수 없습니다. SSR을 지원하려면 Vercel이나 Railway 같은 다른 호스팅 서비스를 고려해보세요.
-
-## 로컬 개발
+## 설치 및 실행
 
 ```bash
+# 의존성 패키지 설치
+npm install
+
 # 개발 서버 실행
 npm run dev
 
-# 프로덕션 빌드
+# 빌드
 npm run build
 
-# 프로덕션 빌드 서버 실행
-npm start
+# 배포 서버 실행
+npm run start
 ```
+
+## 환경 변수 설정
+
+`.env` 파일을 생성하고 다음 변수를 설정합니다:
+
+```
+VITE_SUPABASE_URL=your-supabase-url
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+
+## 데이터베이스 구조
+
+Supabase에 다음 테이블이 필요합니다:
+
+- **missions**: 사용자의 미션 목록
+- **mission_history**: 미션 달성 기록
+- **badges**: 도전과제 배지 정보
+- **user_badges**: 사용자가 획득한 배지
+- **challenges**: 도전과제 설정
+
+## 배지 이미지
+
+배지 이미지는 Supabase Storage의 `badges` 버킷에 업로드되어 있어야 합니다.
+
+## 성공 효과
+
+미션 달성 시 confetti 효과와 소리가 재생됩니다. `public/sounds/success.mp3` 파일이 필요합니다.

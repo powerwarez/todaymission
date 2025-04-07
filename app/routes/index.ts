@@ -11,6 +11,6 @@ export async function loader() {
   return redirect('/login');
 }
 
-export default function Home() {
+export default function Index() {
   return null;
-}
+} 
