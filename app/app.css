@@ -1,20 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap");
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @layer base {
   body {
-    font-family: 'Nunito', sans-serif;
+    font-family: "Nunito", sans-serif;
   }
 }
 
 @layer components {
   .shadow-soft {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
-  
+
   /* 벌집 모양의 배지 그리드 */
   .honeycomb-grid {
     display: flex;
@@ -26,7 +25,7 @@
     padding: 20px;
     position: relative;
   }
-  
+
   .honeycomb-cell {
     width: 100px;
     height: 115px;
@@ -39,11 +38,11 @@
     justify-content: center;
     transition: transform 0.3s ease;
   }
-  
+
   .honeycomb-cell:hover {
     transform: scale(1.1);
   }
-  
+
   .honeycomb-content {
     display: flex;
     flex-direction: column;
@@ -51,7 +50,7 @@
     justify-content: center;
     padding: 10px;
   }
-  
+
   /* 비어있는 배지 셀 */
   .honeycomb-cell.empty {
     background: #f3f4f6;
@@ -60,9 +59,10 @@
 
 html,
 body {
-  @apply bg-white dark:bg-gray-950;
+  background-color: #ffffff;
 
   @media (prefers-color-scheme: dark) {
+    background-color: #030712;
     color-scheme: dark;
   }
 }

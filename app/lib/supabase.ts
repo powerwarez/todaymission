@@ -1,29 +1,26 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
-// 환경 변수에서 Supabase URL과 Anon Key 가져오기
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// 환경 변수에서 Supabase URL과 Anon Key 가져오기 (Vite의 환경 변수 접근 방식)
+const supabaseUrl: string = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey: string = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// 환경 변수 확인 로그
-console.log('Supabase URL:', supabaseUrl);
-console.log('Supabase Anon Key 존재 여부:', !!supabaseAnonKey);
-
-// 환경 변수가 없을 경우 오류 메시지 표시
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Supabase 환경 변수가 설정되지 않았습니다.');
+  throw new Error(
+    "필수 환경 변수가 누락되었습니다. VITE_SUPABASE_URL과 VITE_SUPABASE_ANON_KEY를 반드시 설정해주세요."
+  );
 }
 
+console.log("Supabase URL 존재 여부:", !!supabaseUrl);
+console.log("Supabase Anon Key 존재 여부:", !!supabaseAnonKey);
+
 // Supabase 클라이언트 생성
-export const supabase = createClient(
-  supabaseUrl as string,
-  supabaseAnonKey as string
-);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export type Mission = {
   id: number;
   user_id: string;
   title: string;
-  weekday: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday';
+  weekday: "monday" | "tuesday" | "wednesday" | "thursday" | "friday";
   completed: boolean;
   created_at: string;
 };
@@ -64,4 +61,4 @@ export type Challenge = {
     count: number;
   };
   badge?: Badge;
-}; 
+};

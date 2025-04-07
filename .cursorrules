@@ -49,3 +49,7 @@ The application includes a comprehensive authentication flow:
 - **Navbar**: A responsive navbar for the landing page and public pages
 - **Sidebar**: A collapsible sidebar for the dashboard, for navigation within protected routes
 - **Layouts**: Reusable layout components using React Router's nested routes and outlets
+
+.env파일을 직접 수정하지 않는다.
+코드에 api키와 같은 환경변수를 직접 입력하지 않는다.
+코드에 가짜데이터 또는 더미 데이터를 넣지 않는다.

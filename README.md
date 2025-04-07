@@ -120,18 +120,9 @@ npm run build
 npm run start
 ```
 
-## 환경 변수 설정
-
-`.env` 파일을 생성하고 다음 변수를 설정합니다:
-
-```
-VITE_SUPABASE_URL=your-supabase-url
-VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
-```
-
 ## 데이터베이스 구조
 
-Supabase에 다음 테이블이 필요합니다:
+Supabase에 다음 테이블이 있습니다:
 
 - **missions**: 사용자의 미션 목록
 - **mission_history**: 미션 달성 기록
@@ -141,8 +132,8 @@ Supabase에 다음 테이블이 필요합니다:
 
 ## 배지 이미지
 
-배지 이미지는 Supabase Storage의 `badges` 버킷에 업로드되어 있어야 합니다.
+배지 이미지는 Supabase Storage의 `badges` 버킷에 업로드되어 있습니다.
 
 ## 성공 효과
 
-미션 달성 시 confetti 효과와 소리가 재생됩니다. `public/sounds/success.mp3` 파일이 필요합니다.
+미션 달성 시 confetti 효과와 소리가 재생됩니다. `/Users/powerwarez/Desktop/todaymission/public/sounds/high_rune.flac` 파일이 있습니다.
