@@ -18,24 +18,13 @@ export default function Login() {
   const [isClient, setIsClient] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 클라이언트 사이드에서만 window 객체와 세션을 확인
+  // 클라이언트 사이드에서만 window 객체 접근
   useEffect(() => {
-    async function checkSession() {
-      setIsClient(true);
-      if (typeof window !== "undefined") {
-        setRedirectUrl(`${window.location.origin}/dashboard`);
-
-        // 이미 로그인되어 있는지 확인
-        const { data } = await supabase.auth.getSession();
-        if (data.session) {
-          window.location.href = "/dashboard";
-          return;
-        }
-      }
-      setIsLoading(false);
+    setIsClient(true);
+    if (typeof window !== "undefined") {
+      setRedirectUrl(`${window.location.origin}/dashboard`);
     }
-
-    checkSession();
+    setIsLoading(false);
   }, []);
 
   const handleKakaoLogin = async () => {

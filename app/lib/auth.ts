@@ -23,13 +23,22 @@ export async function getUserId() {
 }
 
 export async function requireAuth() {
-  const session = await getSession();
+  try {
+    const session = await getSession();
 
-  if (!session) {
+    if (!session) {
+      console.log("인증이 필요합니다. 로그인 페이지로 리다이렉트합니다.");
+      throw redirect("/login");
+    }
+
+    return session;
+  } catch (error) {
+    if (error instanceof Response) {
+      throw error; // redirect 응답은 그대로 전달
+    }
+    console.error("인증 확인 중 오류:", error);
     throw redirect("/login");
   }
-
-  return session;
 }
 
 export async function signOut() {
