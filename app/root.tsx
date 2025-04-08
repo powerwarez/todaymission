@@ -5,11 +5,51 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
+  useRevalidator,
 } from "react-router";
-import { ThemeProvider } from './lib/theme-context';
+import { useEffect, useState } from "react";
+import { createSupabaseServerClient } from "./lib/createSupabaseServerClient";
+import { createSupabaseBrowserClient } from "./lib/createSupabaseBrowserClient";
+import type { SupabaseClient, Session } from "@supabase/supabase-js";
 
+import { ThemeProvider } from './lib/theme-context';
 import type { Route } from "./+types/root";
 import "./app.css";
+
+type Env = {
+  SUPABASE_URL: string;
+  SUPABASE_ANON_KEY: string;
+};
+
+type LoaderData = {
+  env: Env;
+  session: Session | null;
+};
+
+export const loader = async ({ request }: { request: Request }) => {
+  const env = {
+    SUPABASE_URL: process.env.SUPABASE_URL!,
+    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY!,
+  };
+
+  const response = new Response();
+  const supabase = createSupabaseServerClient(request as any, response as any);
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const loaderData: LoaderData = { env, session };
+
+  const responseHeaders = new Headers(response.headers);
+  responseHeaders.set('Content-Type', 'application/json');
+
+  return new Response(JSON.stringify(loaderData), {
+    status: 200,
+    headers: responseHeaders
+  });
+};
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -25,6 +65,32 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const loaderData = useLoaderData() as LoaderData | undefined;
+  const env = loaderData?.env;
+  const session = loaderData?.session;
+  const revalidator = useRevalidator();
+  const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
+
+  useEffect(() => {
+    if (env) {
+      const browserClient = createSupabaseBrowserClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+      setSupabase(browserClient);
+
+      const { data: { subscription } } = browserClient.auth.onAuthStateChange((event, newSession) => {
+        if (newSession?.access_token !== session?.access_token) {
+          console.log("Auth state changed on client, revalidating...");
+          revalidator.revalidate();
+        }
+      });
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    } else {
+      console.warn("Supabase env variables not found in loader data.");
+    }
+  }, [env, session, revalidator]);
+
   return (
     <html lang="ko">
       <head>
