@@ -9,7 +9,7 @@ import {
   useRevalidator,
 } from "react-router";
 import { useEffect, useState } from "react";
-import { createSupabaseServerClient } from "./lib/createSupabaseServerClient";
+import { getServerClient } from "./lib/server";
 import { createSupabaseBrowserClient } from "./lib/createSupabaseBrowserClient";
 import type { SupabaseClient, Session } from "@supabase/supabase-js";
 
@@ -28,26 +28,38 @@ type LoaderData = {
 };
 
 export const loader = async ({ request }: { request: Request }) => {
+  console.log("ROOT LOADER: Received request", { url: request.url });
   const env = {
     SUPABASE_URL: process.env.SUPABASE_URL!,
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY!,
   };
 
-  const response = new Response();
-  const supabase = createSupabaseServerClient(request as any, response as any);
+  const { supabase, headers } = getServerClient(request);
+  console.log("ROOT LOADER: Server client created, fetching session...");
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  let session: Session | null = null;
+  let error: any = null;
+  try {
+    const { data, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+      throw sessionError;
+    }
+    session = data.session;
+    console.log("ROOT LOADER: Session fetched successfully", { hasSession: !!session });
+  } catch (err) {
+    error = err;
+    console.error("ROOT LOADER: Error fetching session:", error);
+  }
 
   const loaderData: LoaderData = { env, session };
 
-  const responseHeaders = new Headers(response.headers);
+  const responseHeaders = new Headers(headers);
   responseHeaders.set('Content-Type', 'application/json');
 
+  console.log("ROOT LOADER: Returning response with headers");
   return new Response(JSON.stringify(loaderData), {
-    status: 200,
-    headers: responseHeaders
+    status: error ? 500 : 200,
+    headers: responseHeaders,
   });
 };
 
@@ -73,21 +85,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (env) {
+      console.log("Layout Effect: Env found, creating browser client");
       const browserClient = createSupabaseBrowserClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
       setSupabase(browserClient);
 
+      console.log("Layout Effect: Setting up auth state change listener");
       const { data: { subscription } } = browserClient.auth.onAuthStateChange((event, newSession) => {
+        console.log("Layout Effect: Auth state changed", { event, hasNewSession: !!newSession, currentAccessToken: session?.access_token, newAccessToken: newSession?.access_token });
         if (newSession?.access_token !== session?.access_token) {
-          console.log("Auth state changed on client, revalidating...");
+          console.log("Layout Effect: Access token changed, revalidating...");
           revalidator.revalidate();
         }
       });
 
       return () => {
+        console.log("Layout Effect: Unsubscribing from auth state changes");
         subscription.unsubscribe();
       };
     } else {
-      console.warn("Supabase env variables not found in loader data.");
+      console.warn("Layout Effect: Supabase env variables not found in loader data.");
     }
   }, [env, session, revalidator]);
 
@@ -117,6 +133,7 @@ export default function App() {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  console.error("ErrorBoundary caught an error:", error);
   let message = "Oops!";
   let details = "An unexpected error occurred.";
   let stack: string | undefined;
