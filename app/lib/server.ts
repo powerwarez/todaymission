@@ -1,7 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 
-// 기본 Supabase 클라이언트 - 단순 인증 체크 용도로 사용
+// 기본 Supabase 클라이언트 생성 로직 제거
+/*
 export const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL ||
     "",
@@ -14,6 +15,7 @@ export const supabase = createClient(
     },
   }
 );
+*/
 
 // 서버 환경에서 쿠키 기반 Supabase 클라이언트 생성
 export const getServerClient = (request: Request) => {

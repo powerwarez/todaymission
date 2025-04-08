@@ -1,7 +1,10 @@
-import { redirect } from "react-router";
-import { supabase } from "../lib/server";
+import { redirect, useOutletContext } from "react-router";
 import { getSession } from "../lib/auth";
 import { useEffect, useState } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+// Layout에서 전달하는 context 타입 정의
+type OutletContextType = { supabase: SupabaseClient | null };
 
 export async function loader() {
   const session = await getSession();
@@ -24,6 +27,8 @@ export async function loader() {
 }
 
 export default function Login() {
+  // useOutletContext 훅으로 supabase 클라이언트 가져오기
+  const { supabase } = useOutletContext<OutletContextType>();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,6 +57,13 @@ export default function Login() {
   // 무한 리디렉션 루프 방지
 
   const handleKakaoLogin = async () => {
+    // supabase 클라이언트가 로드되었는지 확인
+    if (!supabase) {
+      setError("로그인 서비스를 초기화하는 중입니다. 잠시 후 다시 시도해주세요.");
+      console.error("handleKakaoLogin Error: Supabase client is not available yet.");
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -117,7 +129,7 @@ export default function Login() {
 
         <button
           onClick={handleKakaoLogin}
-          disabled={isLoading}
+          disabled={isLoading || !supabase}
           className="w-full bg-[#FEE500] border border-gray-300 text-[#3A1D1D] py-3 px-4 rounded-full font-semibold flex items-center justify-center shadow-sm hover:shadow-md transition-shadow disabled:opacity-70"
         >
           {isLoading ? (

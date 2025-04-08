@@ -138,7 +138,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <ThemeProvider>
-          {children}
+          <Outlet context={{ supabase }} />
         </ThemeProvider>
         <ScrollRestoration />
         <Scripts />
