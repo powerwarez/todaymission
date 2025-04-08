@@ -3,12 +3,10 @@ import { createServerClient } from "@supabase/ssr";
 
 // 기본 Supabase 클라이언트 - 단순 인증 체크 용도로 사용
 export const supabase = createClient(
-  process.env.SUPABASE_URL ||
-    import.meta.env.VITE_SUPABASE_URL ||
-    "https://example.supabase.co",
-  process.env.SUPABASE_ANON_KEY ||
-    import.meta.env.VITE_SUPABASE_ANON_KEY ||
-    "your-anon-key",
+  import.meta.env.VITE_SUPABASE_URL ||
+    "",
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+    "",
   {
     auth: {
       autoRefreshToken: true,
@@ -20,9 +18,23 @@ export const supabase = createClient(
 // 서버 환경에서 쿠키 기반 Supabase 클라이언트 생성
 export const getServerClient = (request: Request) => {
   const headers = new Headers();
+  
+  // 환경 변수 읽기 (import.meta.env 사용)
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error("getServerClient Error: Missing Supabase environment variables (VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY)");
+    // 환경 변수가 없으면 클라이언트 생성 불가 -> 오류 발생 또는 빈 클라이언트 반환 등의 처리 필요
+    // 여기서는 오류를 던지거나, 빈 헤더와 함께 null 클라이언트를 반환하는 것을 고려할 수 있음
+    // 임시로 빈 객체 반환 (오류를 유발할 수 있음)
+    // throw new Error("Missing Supabase environment variables for server client");
+    return { supabase: null, headers }; 
+  }
+
   const supabase = createServerClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         get(name) {
@@ -30,33 +42,23 @@ export const getServerClient = (request: Request) => {
           const cookie = cookies
             .split(";")
             .find((c) => c.trim().startsWith(`${name}=`));
-
-          if (!cookie) return null;
-
+          if (!cookie) return undefined; // @supabase/ssr v1.0 이상에서는 null 대신 undefined 반환 권장
           const value = cookie.split("=")[1];
           return decodeURIComponent(value);
         },
         set(name, value, options) {
-          headers.append(
-            "Set-Cookie",
-            `${name}=${encodeURIComponent(value)}; Path=/; ${
-              options?.maxAge ? `Max-Age=${options.maxAge};` : ""
-            } ${options?.domain ? `Domain=${options.domain};` : ""} ${
-              options?.sameSite ? `SameSite=${options.sameSite};` : ""
-            } ${options?.httpOnly ? "HttpOnly;" : ""} ${
-              options?.secure ? "Secure;" : ""
-            }`
-          );
+          try {
+            headers.append("Set-Cookie", `${name}=${encodeURIComponent(value)}; Path=${options.path || '/'}; Max-Age=${options.maxAge}; SameSite=${options.sameSite || 'Lax'}; HttpOnly=${options.httpOnly !== false}; Secure=${options.secure !== false}${options.domain ? `; Domain=${options.domain}` : ''}`);
+          } catch (error) {
+            console.error(`Failed to set cookie ${name}`, error);
+          }
         },
         remove(name, options) {
-          headers.append(
-            "Set-Cookie",
-            `${name}=; Max-Age=0; Path=/; ${
-              options?.domain ? `Domain=${options.domain};` : ""
-            } ${options?.sameSite ? `SameSite=${options.sameSite};` : ""} ${
-              options?.httpOnly ? "HttpOnly;" : ""
-            } ${options?.secure ? "Secure;" : ""}`
-          );
+          try {
+            headers.append("Set-Cookie", `${name}=; Path=${options.path || '/'}; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; HttpOnly=${options.httpOnly !== false}; Secure=${options.secure !== false}${options.domain ? `; Domain=${options.domain}` : ''}`);
+          } catch (error) {
+             console.error(`Failed to remove cookie ${name}`, error);
+          }
         },
       },
     }

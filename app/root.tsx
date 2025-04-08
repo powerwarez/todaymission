@@ -20,7 +20,7 @@ import "./app.css";
 type Env = {
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
-};
+} | null;
 
 type LoaderData = {
   env: Env;
@@ -29,26 +29,45 @@ type LoaderData = {
 
 export const loader = async ({ request }: { request: Request }) => {
   console.log("ROOT LOADER: Received request", { url: request.url });
-  const env = {
-    SUPABASE_URL: process.env.SUPABASE_URL!,
-    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY!,
-  };
-
-  const { supabase, headers } = getServerClient(request);
-  console.log("ROOT LOADER: Server client created, fetching session...");
-
+  let env: Env = null;
   let session: Session | null = null;
-  let error: any = null;
+  let headers = new Headers();
+  let status = 500;
+
   try {
-    const { data, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) {
-      throw sessionError;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error("ROOT LOADER: Error - Missing Supabase environment variables (VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY)");
+      throw new Error("Missing Supabase environment variables");
     }
-    session = data.session;
-    console.log("ROOT LOADER: Session fetched successfully", { hasSession: !!session });
+    env = { SUPABASE_URL: supabaseUrl, SUPABASE_ANON_KEY: supabaseAnonKey };
+    console.log("ROOT LOADER: Environment variables loaded");
+
+    const { supabase: serverSupabase, headers: clientHeaders } = getServerClient(request);
+    headers = clientHeaders;
+    console.log("ROOT LOADER: Server client created, fetching session...");
+
+    if (!serverSupabase) {
+      console.error("ROOT LOADER: Failed to create server Supabase client (likely missing env vars in getServerClient)");
+      throw new Error("Failed to create server Supabase client");
+    }
+
+    const { data, error: sessionError } = await serverSupabase.auth.getSession();
+
+    if (sessionError) {
+      console.error("ROOT LOADER: Error fetching session:", sessionError);
+      status = 200;
+    } else {
+      session = data.session;
+      status = 200;
+      console.log("ROOT LOADER: Session fetched successfully", { hasSession: !!session });
+    }
+
   } catch (err) {
-    error = err;
-    console.error("ROOT LOADER: Error fetching session:", error);
+    console.error("ROOT LOADER: Critical error in loader:", err);
+    status = 500;
   }
 
   const loaderData: LoaderData = { env, session };
@@ -56,9 +75,9 @@ export const loader = async ({ request }: { request: Request }) => {
   const responseHeaders = new Headers(headers);
   responseHeaders.set('Content-Type', 'application/json');
 
-  console.log("ROOT LOADER: Returning response with headers");
+  console.log(`ROOT LOADER: Returning response with status ${status}`);
   return new Response(JSON.stringify(loaderData), {
-    status: error ? 500 : 200,
+    status: status,
     headers: responseHeaders,
   });
 };
@@ -78,13 +97,13 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const loaderData = useLoaderData() as LoaderData | undefined;
-  const env = loaderData?.env;
-  const session = loaderData?.session;
+  const env = loaderData?.env ?? null;
+  const session = loaderData?.session ?? null;
   const revalidator = useRevalidator();
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
 
   useEffect(() => {
-    if (env) {
+    if (env && env.SUPABASE_URL && env.SUPABASE_ANON_KEY) {
       console.log("Layout Effect: Env found, creating browser client");
       const browserClient = createSupabaseBrowserClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
       setSupabase(browserClient);
@@ -103,7 +122,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         subscription.unsubscribe();
       };
     } else {
-      console.warn("Layout Effect: Supabase env variables not found in loader data.");
+      console.warn("Layout Effect: Supabase env variables not found or invalid in loader data.");
     }
   }, [env, session, revalidator]);
 
@@ -145,7 +164,9 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
         ? "The requested page could not be found."
         : error.statusText || details;
   } else if (import.meta.env.DEV && error && error instanceof Error) {
-    details = error.message;
+    details = error.message.includes("environment variables") 
+              ? "Server configuration error: Missing Supabase credentials." 
+              : error.message;
     stack = error.stack;
   }
 
